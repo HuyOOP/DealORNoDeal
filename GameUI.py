@@ -1,6 +1,7 @@
 import random
 import tkinter as tk
 from tkinter import messagebox
+from tkinter import font
 
 class DealOrNoDealGame:
     def __init__(self, root):
@@ -9,14 +10,16 @@ class DealOrNoDealGame:
         self.root.geometry("1200x720")
         self.root.config(bg="#1a1a2e")
 
-        self_prize = [1000 , 2000 , 5000 , 10000 , 20000 , 50000 , 100000 , 200000 , 500000 , 1000000 , 1500000 , 2000000 , 2500000 ,
+        self.prizes = [1000 , 2000 , 5000 , 10000 , 20000 , 50000 , 100000 , 200000 , 500000 , 1000000 , 1500000 , 2000000 , 2500000 ,
             3000000 , 4000000 , 5000000 , 10000000 , 15000000 , 20000000 , 25000000 , 50000000 , 100000000 , 200000000 , 
             250000000 , 500000000 , 1000000000]
 
-        random.shuffle(self_prize)  # Shuffle the prize amounts
-        self.cases = {i + 1: self_prize[i] for i in range(26)}
+        random.shuffle(self.prizes)  # Shuffle the prize amounts
+        self.cases = {i + 1: self.prizes[i] for i in range(26)}
         self.player_case = None
         self.active_cases = list(self.cases.keys())
+
+        
 
         self.rounds = [
             (6, "Vòng 1: Mở 6 vali"),
@@ -55,6 +58,31 @@ class DealOrNoDealGame:
             case_button.grid(row=row, column=col, padx=10, pady=10)
             self.case_buttons[i] = case_button
 
+        self.board_frame = tk.Frame(self.root, bg="#16213e", bd=2, relief=tk.GROOVE)
+        self.board_frame.pack(side=tk.RIGHT, padx=20, pady=20, fill=tk.Y)
+
+        tk.Label(
+            self.board_frame, text=" BẢNG GIẢI THƯỞNG ", 
+            font=("Arial", 14, "bold"), fg="#f39c12", bg="#16213e"
+        ).pack(pady=10)
+
+        self.prize_labels = {}
+        sorted_prizes = sorted(self.prizes, reverse=True)
+        
+        for idx, p in enumerate(sorted_prizes):
+            row = (idx % 13) + 1  # 13 hàng mỗi cột
+            col = idx // 13       # 2 cột (Cột 0 và Cột 1)
+            lbl = tk.Label(
+                self.board_frame, 
+                text=f" {p:,} VND ", 
+                font=("Arial", 11, "bold"), 
+                fg="#2ecc71", 
+                bg="#16213e",
+                anchor="w"
+            )
+            lbl.pack(anchor="w", padx=15, pady=2)
+            self.prize_labels[p] = lbl
+
         self.status_frame = tk.Frame(self.root, bg="#1a1a2e")
         self.status_frame.pack(pady=20)
 
@@ -77,6 +105,8 @@ class DealOrNoDealGame:
             
             self.active_cases.remove(case_number)
             opened_value = self.cases[case_number]
+            if opened_value in self.prize_labels:
+                self.prize_labels[opened_value].config(fg="#555555" , font=("Arial", 14, "overstrike"))  # Change color to black for opened prize
             self.case_buttons[case_number].config(state="disabled", bg="#e74c3c" , text=f"Case {case_number}\n${opened_value:,}")
             
             self.opened_left_in_round -= 1
