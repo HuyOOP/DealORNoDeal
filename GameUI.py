@@ -1,3 +1,4 @@
+from email import message
 import random
 import tkinter as tk
 from tkinter import messagebox
@@ -18,8 +19,6 @@ class DealOrNoDealGame:
         self.cases = {i + 1: self.prizes[i] for i in range(26)}
         self.player_case = None
         self.active_cases = list(self.cases.keys())
-
-        
 
         self.rounds = [
             (6, "Vòng 1: Mở 6 vali"),
@@ -87,6 +86,16 @@ class DealOrNoDealGame:
             lbl.grid(row=row, column=col, padx=5, pady=1)
             self.prize_labels[p] = lbl
 
+        self.history_frame = tk.Frame(self.root, bg="#1a1a2e", bd=2, relief=tk.GROOVE)
+        self.history_frame.pack(side=tk.RIGHT, padx=10, pady=20, fill=tk.BOTH, expand=True)
+        tk.Label(
+            self.history_frame, text=" LỊCH SỬ OFFER ", 
+            font=("Arial", 14, "bold"), fg="#f39c12", bg="#16213e"
+        ).pack(pady=5)
+
+        self.history_text = tk.Text(self.history_frame, height=10, width=30, font=("Arial", 10), bg="#0f172a", fg="white", state=tk.DISABLED, bd=1, relief=tk.SUNKEN)
+        self.history_text.pack(padx=10, pady=5, fill=tk.BOTH, expand=True)
+
         self.status_frame = tk.Frame(self.root, bg="#1a1a2e")
         self.status_frame.pack(pady=20)
 
@@ -112,7 +121,9 @@ class DealOrNoDealGame:
             if opened_value in self.prize_labels:
                 self.prize_labels[opened_value].config(fg="#555555" , font=("Arial", 9, "overstrike"))  # Change color to black for opened prize
             self.case_buttons[case_number].config(state="disabled", bg="#e74c3c" , text=f"Case {case_number}\n${opened_value:,}")
-            
+            self.history_text.config(state=tk.NORMAL)
+            self.history_text.insert(tk.END, f"Case {case_number} opened with prize: ${opened_value:,}\n")
+            self.history_text.config(state=tk.DISABLED)
             self.opened_left_in_round -= 1
             if self.opened_left_in_round > 0:
                     self.instruction_label.config(text=f"Cần mở thêm {self.opened_left_in_round} more case(s) in this round.")
@@ -129,19 +140,29 @@ class DealOrNoDealGame:
          
         offer = int(average_prize * (0.4 + 0.05 * (9 - self.current_round)))
         self.instruction_label.config(text=f"📞 Đang có cuộc gọi từ Nhà đầu tư (Banker)...")           
-        deal = messagebox.askyesno("Bank Offer", f"Nhà đầu tư (Banker) đưa ra lời đề nghị: {offer:,} VND.\nBạn có muốn chấp nhận lời đề nghị (Deal) không?")               
+        deal = messagebox.askyesno("Bank Offer", f"Nhà đầu tư (Banker) đưa ra lời đề nghị: {offer:,} VND.\nBạn có muốn chấp nhận lời đề nghị (Deal) không?")  
+        choice_text = "Deal" if deal else "No Deal"
+        self.update_history(self.rounds[self.current_round][1], offer, choice_text)             
         if deal:
-             messagebox.showinfo("Deal Accepted", f"Bạn đã chấp nhận lời đề nghị của Ngân Hàng với giá: {offer:,} VND\nGiá trị bên trong vali số {self.player_case} là: {self.cases[self.player_case]:,} VND")
-             self.root.quit()
+            self.save_history_to_file(offer)
+            messagebox.showinfo("Deal Accepted", f"Bạn đã chấp nhận lời đề nghị của Ngân Hàng với giá: {offer:,} VND\nGiá trị bên trong vali số {self.player_case} là: {self.cases[self.player_case]:,} VND")
+            self.root.quit()
         else:
-                messagebox.showinfo("Deal Rejected", "Không chấp nhận lời đề nghị của Ngân Hàng. Tiếp tục mở các vali còn lại.")
-                self.current_round += 1
-                if self.current_round < len(self.rounds):
+            messagebox.showinfo("Deal Rejected", "Không chấp nhận lời đề nghị của Ngân Hàng. Tiếp tục mở các vali còn lại.")
+            self.current_round += 1
+            if self.current_round < len(self.rounds):
                     self.opened_left_in_round = self.rounds[self.current_round][0]
                     self.state = "Opening"
                     self.instruction_label.config(text=f"Vòng {self.current_round + 1}: Hãy mở {self.opened_left_in_round} more case(s) in this round.")
-                else:
+            else:
                     self.end_game()
+
+    def update_history(self, round_name, offer_amount, player_choice):
+        self.history_text.config(state=tk.NORMAL)
+        log_message = f"[{round_name}] Offer: {offer_amount:,} VND - Player chose: {player_choice}\n"
+        self.history_text.insert(tk.END, log_message)
+        self.history_text.see(tk.END)  # Scroll to the end
+        self.history_text.config(state=tk.DISABLED)
 
     def end_game(self):
         self.instruction_label.config(text="Game Over! Revealing your case...")
@@ -167,6 +188,9 @@ class DealOrNoDealGame:
             other_case = last_case
             swap_msg = f"Bạn đã giữ lại vali số {self.player_case}."
 
+        final_amount = self.cases[final_case]
+        self.save_history_to_file(final_amount)
+
         messagebox.showinfo(
             "Kết Quả Chung Cuộc",
             f"{swap_msg}\n\n"
@@ -174,9 +198,28 @@ class DealOrNoDealGame:
             f"📦 Vali còn lại chứa: **{self.cases[other_case]:,} VND**\n\n"
             f"Cảm ơn bạn đã tham gia chương trình !!"
         )
+        
         self.root.quit()
 
+    def save_history_to_file(self, final_amount):
+        import datetime
+        import os
 
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        filename = os.path.join(current_dir, "Game_History.txt")
+        count_play = 0
+        if os.path.exists(filename):
+            with open(filename, "r", encoding="utf-8") as f:
+                count_play = len(f.readlines())
+
+        new_count_play = count_play + 1
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        entry = f"Game {new_count_play} - {timestamp} - Final Amount: {final_amount:,} VND\n"
+        with open(filename, "a", encoding="utf-8") as f:
+            f.write(entry)
+
+        print(f"Game history saved to {filename}.")
+        
 
 if __name__ == "__main__":
     root = tk.Tk()
