@@ -64,23 +64,27 @@ class DealOrNoDealGame:
         tk.Label(
             self.board_frame, text=" BẢNG GIẢI THƯỞNG ", 
             font=("Arial", 14, "bold"), fg="#f39c12", bg="#16213e"
-        ).pack(pady=10)
+        ).grid(row=0, column=0, columnspan=2, pady=10)
 
         self.prize_labels = {}
         sorted_prizes = sorted(self.prizes, reverse=True)
+
+        # Tự động tính số dòng mỗi cột dựa trên tổng số giải thưởng thực tế
+        total_items = len(sorted_prizes)
+        items_per_col = (total_items + 1) // 2  # Chia đôi tự động
         
         for idx, p in enumerate(sorted_prizes):
-            row = (idx % 13) + 1  # 13 hàng mỗi cột
-            col = idx // 13       # 2 cột (Cột 0 và Cột 1)
+            row = (idx % items_per_col) + 1  # Hàng mỗi cột
+            col = idx // items_per_col       # Cột (Cột 0 và Cột 1)
             lbl = tk.Label(
                 self.board_frame, 
                 text=f" {p:,} VND ", 
-                font=("Arial", 11, "bold"), 
+                font=("Arial", 9, "bold"), 
                 fg="#2ecc71", 
                 bg="#16213e",
                 anchor="w"
             )
-            lbl.pack(anchor="w", padx=15, pady=2)
+            lbl.grid(row=row, column=col, padx=5, pady=1)
             self.prize_labels[p] = lbl
 
         self.status_frame = tk.Frame(self.root, bg="#1a1a2e")
@@ -106,7 +110,7 @@ class DealOrNoDealGame:
             self.active_cases.remove(case_number)
             opened_value = self.cases[case_number]
             if opened_value in self.prize_labels:
-                self.prize_labels[opened_value].config(fg="#555555" , font=("Arial", 14, "overstrike"))  # Change color to black for opened prize
+                self.prize_labels[opened_value].config(fg="#555555" , font=("Arial", 9, "overstrike"))  # Change color to black for opened prize
             self.case_buttons[case_number].config(state="disabled", bg="#e74c3c" , text=f"Case {case_number}\n${opened_value:,}")
             
             self.opened_left_in_round -= 1
