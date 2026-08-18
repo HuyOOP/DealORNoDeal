@@ -11,31 +11,53 @@ class DealOrNoDealGame:
         self.root.geometry("1200x720")
         self.root.config(bg="#1a1a2e")
 
-        self.prizes = [1000 , 2000 , 5000 , 10000 , 20000 , 50000 , 100000 , 200000 , 500000 , 1000000 , 1500000 , 2000000 , 2500000 ,
-            3000000 , 4000000 , 5000000 , 10000000 , 15000000 , 20000000 , 25000000 , 50000000 , 100000000 , 200000000 , 
-            250000000 , 500000000 , 1000000000]
+        self.menu_frame = tk.Frame(self.root, bg="#0f172a")
+        self.menu_frame.pack(fill=tk.BOTH, expand=True)
 
+        tk.Label(self.menu_frame, text="DEAL OR NOT!", font=("Arial", 36, "bold"), bg="#0f172a", fg="#f39c12").pack(pady=(120, 10))
+        tk.Label(self.menu_frame, text="ĐI TÌM ẨN SỐ - PHIÊN BẢN VIETNAM", font=("Arial", 24), bg="#0f172a", fg="#f39c12").pack(pady=(0, 50))
+
+        start_button = tk.Button(self.menu_frame, text="BẮT ĐẦU", font=("Arial", 18, "bold"), bg="#162447", fg="white", padx=20, pady=10, width=20, height=2, command=self.start_game)
+        start_button.pack(pady=10)
+
+        exit_button = tk.Button(self.menu_frame, text="THOÁT", font=("Arial", 18, "bold"), bg="#e74c3c", fg="white", padx=20, pady=10, width=20, height=2, command=self.root.quit)
+        exit_button.pack(pady=10)
+
+        self.game_frame = tk.Frame(self.root, bg="#1a1a2e")
+
+        
+
+    def start_game(self):
+        self.menu_frame.pack_forget()
+        self.game_frame.pack(fill=tk.BOTH, expand=True)
+        self.init_game_widgets()
+
+    def init_game_widgets(self):
+        self.prizes = [1000 , 2000 , 5000 , 10000 , 20000 , 50000 , 100000 , 200000 , 500000 , 1000000 , 1500000 , 2000000 , 2500000 ,
+                     3000000 , 4000000 , 5000000 , 10000000 , 15000000 , 20000000 , 25000000 , 50000000 , 100000000 , 200000000 , 
+                     250000000 , 500000000 , 1000000000]
+         
         random.shuffle(self.prizes)  # Shuffle the prize amounts
         self.cases = {i + 1: self.prizes[i] for i in range(26)}
         self.player_case = None
         self.active_cases = list(self.cases.keys())
-
+         
         self.rounds = [
-            (6, "Vòng 1: Mở 6 vali"),
-            (5, "Vòng 2: Mở 5 vali"),
-            (4, "Vòng 3: Mở 4 vali"),
-            (3, "Vòng 4: Mở 3 vali"),
-            (2, "Vòng 5: Mở 2 vali"),
-            (1, "Vòng 6: Mở 1 vali"),
-            (1, "Vòng 7: Mở 1 vali"),
-            (1, "Vòng 8: Mở 1 vali"),
-            (1, "Vòng cuối cùng: Mở 1 vali") ]
-
+                     (6, "Vòng 1: Mở 6 vali"),
+                     (5, "Vòng 2: Mở 5 vali"),
+                     (4, "Vòng 3: Mở 4 vali"),
+                     (3, "Vòng 4: Mở 3 vali"),
+                     (2, "Vòng 5: Mở 2 vali"),
+                     (1, "Vòng 6: Mở 1 vali"),
+                     (1, "Vòng 7: Mở 1 vali"),
+                     (1, "Vòng 8: Mở 1 vali"),
+                     (1, "Vòng cuối cùng: Mở 1 vali") ]
+         
         self.current_round = 0
         self.opened_left_in_round = self.rounds[self.current_round][0]
-
+         
         self.state = "Choose_Player_Case"  # Initial state: choosing the player's case
-
+         
         self.create_widgets()
 
     def create_widgets(self):
@@ -53,9 +75,10 @@ class DealOrNoDealGame:
         for i in range(1, 27):
             row = (i - 1) // 6
             col = (i - 1) % 6
-            case_button = tk.Button(self.case_frame, text=f"Case {i}", font=("Arial", 14), width=10, height=2, bg="#162447", fg="white")
-            case_button.grid(row=row, column=col, padx=10, pady=10)
-            self.case_buttons[i] = case_button
+            case_buttons = tk.Button(self.case_frame, text=f"Case {i}", font=("Arial", 14), width=10, height=2, bg="#162447", fg="white", command=lambda num=i: self.on_case_button_click(case_number=num))
+            case_buttons.grid(row=row, column=col, padx=10, pady=10)
+            self.case_buttons[i] = case_buttons
+            
 
         self.board_frame = tk.Frame(self.root, bg="#16213e", bd=2, relief=tk.GROOVE)
         self.board_frame.pack(side=tk.RIGHT, padx=20, pady=20, fill=tk.Y)
@@ -219,12 +242,11 @@ class DealOrNoDealGame:
             f.write(entry)
 
         print(f"Game history saved to {filename}.")
-        
 
 if __name__ == "__main__":
-    root = tk.Tk()
-    game = DealOrNoDealGame(root)
-    for case_number, button in game.case_buttons.items():
-        button.config(command=lambda num=case_number: game.on_case_button_click(num))
-    root.mainloop()
+        root = tk.Tk()
+        game = DealOrNoDealGame(root)
+        root.mainloop()
+
+
 
